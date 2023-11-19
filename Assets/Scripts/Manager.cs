@@ -2,20 +2,24 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[ImageEffectAllowedInSceneView, ExecuteAlways]
 public class Manager : MonoBehaviour
 {
     Material rayTracerMaterial;
-    // Start is called before the first frame update
+    Shader rayTracerShader;
+
+    [SerializeField] bool useShaderInSceneView;
+
     void Start()
     {
-        
+
     }
 
-    // Update is called once per frame
     void Update()
     {
         
     }
+
     public static void InitMaterial(Shader shader, ref Material mat)
     {
         if (mat == null || (mat.shader != shader && shader != null))
@@ -29,14 +33,17 @@ public class Manager : MonoBehaviour
         }
     }
 
-        private void OnRenderImage(RenderTexture source, RenderTexture destination)
+    private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
-
-        rayTracerMaterial = new Material(Shader.Find("Custom/Shader"));
-        UpdateCamera(Camera.current);
-        Graphics.Blit(source, destination, rayTracerMaterial);
+        if (Camera.current.name != "Main Camera" || useShaderInSceneView) {
+            rayTracerShader = Shader.Find("Custom/RayTracer");
+            InitMaterial(rayTracerShader, ref rayTracerMaterial);
+            UpdateCamera(Camera.current); 
+            Graphics.Blit(null, destination, rayTracerMaterial);
+        } else {
+            Graphics.Blit(source, destination);
+        }
     }
-
 
     void UpdateCamera(Camera cam)
     {
@@ -44,7 +51,5 @@ public class Manager : MonoBehaviour
         float planeWidth = planeHeight * cam.aspect;
         rayTracerMaterial.SetVector("CamDim", new Vector3(planeWidth, planeHeight, cam.nearClipPlane));
         rayTracerMaterial.SetMatrix("CamLocalToWorldMatrix", cam.transform.localToWorldMatrix);
-
     }
-
 }
