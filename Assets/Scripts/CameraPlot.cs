@@ -30,8 +30,9 @@ public class CameraPlot : MonoBehaviour
         Camera cam = Camera.main;
         Transform camT = cam.transform;
 
+        // Calculate dimensions of camera using simple trig
         float planeHeight = cam.nearClipPlane * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) * 2;
-        float planeWidth = planeHeight * cam.aspect;
+        float planeWidth = planeHeight * cam.aspect; // cancel out the aspect ratio to get width
 
 
         Vector3 bottomLeft = new Vector3(-planeWidth / 2, -planeHeight / 2, cam.nearClipPlane);
@@ -43,9 +44,11 @@ public class CameraPlot : MonoBehaviour
                 float tx = x / (16 - 1f); 
                 float ty = y / (9 - 1f);
 
+                // Create a point at bottom left with offset of tx and of ty. Then convert the local point to world point. 
                 Vector3 pointLocal = bottomLeft + new Vector3(planeWidth * tx, planeHeight * ty);
                 Vector3 point = camT.position + camT.right * pointLocal.x + camT.up * pointLocal.y + camT.forward * pointLocal.z;
 
+                // Find direction of where the camera is pointing: point_on_camera_plane - camera_origin.
                 Vector3 dir = (point - camT.position);
                 dir.Normalize();
 

@@ -39,11 +39,13 @@ Shader "Custom/RayTracer"
 
             float4 frag(v2f i) : SV_Target
             {
-                float3 viewPointLocal = float3(i.pos - 0.5, 1) * CamDim;
-                float3 viewPoint = mul(CamLocalToWorldMatrix, float4(viewPointLocal, 1));
+                // Calculate position of a pixel with respect to the camera's projection plane.
+                float3 viewPointLocal = float3(i.pos - 0.5, 1) * CamDim; // center the pixel and scale it by CamDim.
+                float3 viewPoint = mul(CamLocalToWorldMatrix, float4(viewPointLocal, 1)); // Convert point to world coordinates.
+                
                 Ray ray;
                 ray.origin = _WorldSpaceCameraPos;
-                ray.dir = normalize(viewPoint - ray.origin);
+                ray.dir = normalize(viewPoint - ray.origin); // Ray stars from camera and ends in viewPoint.
                 return float4(ray.dir, 0); 
             }
             ENDCG
