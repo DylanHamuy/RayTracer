@@ -2,5 +2,5 @@ using UnityEngine;
 
 [System.Serializable]
 public struct RayTracerMaterial {
-    Color color;
+    public Color color;
 };
