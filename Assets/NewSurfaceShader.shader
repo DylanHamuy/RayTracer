@@ -37,12 +37,27 @@ Shader "Custom/RayTracer"
                 float3 dir;
             };
 
+            struct RayTracerMaterial {
+                float4 color;
+            };
+            
             struct Collision {
                 bool didCollide;
                 float dst; // root/solution to the equation.
                 float3 collisionPoint;
-                float3 normal; // Fix the typo here
+                float3 normal; 
+                RayTracerMaterial material;
             };
+
+            struct Sphere {
+                float3 position;
+                float radius;
+                RayTracerMaterial material;
+            };
+
+            StructuredBuffer<Sphere> Spheres;
+            int NumSpheres;
+  
 
             // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection.html
             Collision intersect(Ray ray, float3 sphereCenter, float sphereRadius) 
@@ -68,6 +83,21 @@ Shader "Custom/RayTracer"
                     }
                 }
                 return collision;
+            }
+
+            Collision closestCollision(Ray ray) {
+                Collision closest = (Collision)0;
+                closest.dst = 1.#INF;
+                
+                for (int i = 0; i < NumSpheres; i++) {
+                    Sphere nextSphere = Spheres[i];
+                    Collision nextCollision = intersect(ray, nextSphere.position, nextSphere.radius);
+                    if (nextCollision.didCollide && nextCollision.dst < closest.dst) {
+                        closest = nextCollision;
+                        closest.material = nextSphere.material;
+                    }
+                }
+                return closest;
             }
 
 
