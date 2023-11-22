@@ -98,4 +98,13 @@ public class Manager : MonoBehaviour
         rayTracerMaterial.SetMatrix("CamLocalToWorldMatrix", cam.transform.localToWorldMatrix);
     }
 
+    void OnDisable()
+	{
+		if (sphereBuffer != null)
+		{
+			sphereBuffer.Release();
+		}
+		
+	}
+
 }

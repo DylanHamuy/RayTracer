@@ -39,6 +39,8 @@ Shader "Custom/RayTracer"
 
             struct RayTracerMaterial {
                 float4 color;
+                float4 emissionColor;
+	            float4 emissionStrength;
             };
             
             struct Collision {
@@ -58,17 +60,14 @@ Shader "Custom/RayTracer"
             StructuredBuffer<Sphere> Spheres;
             int NumSpheres;
   
-			// www.pcg-random.org and www.shadertoy.com/view/XlGcRh
-			uint NextRandom(inout uint state)
-			{
-				state = state * 747796405 + 2891336453;
-				uint result = ((state >> ((state >> 28) + 4)) ^ state) * 277803737;
-				result = (result >> 22) ^ result;
-				return result;
-			}
+
+
             float RandomValue(inout uint state)
 			{
-				return NextRandom(state) / 4294967295.0; // 2^32 - 1
+                state = state * 747796405 + 2891336453;
+				uint result = ((state >> ((state >> 28) + 4)) ^ state) * 277803737;
+				result = (result >> 22) ^ result;
+				return result / 4294967295.0; // 2^32 - 1
 			}
 
 			// Random value in normal distribution (with mean=0 and sd=1)
@@ -89,6 +88,12 @@ Shader "Custom/RayTracer"
 				float z = RandomValueNormalDistribution(state);
 				return normalize(float3(x, y, z));
 			}
+
+            float3 RandomHemisphereDirection(float3 normal, inout uint rngState) 
+            {
+                float3 dir = RandomDirection(rngState);
+                return dir * sign(dot(normal, dir));
+            }
 
             // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection.html
             Collision intersect(Ray ray, float3 sphereCenter, float sphereRadius) 
@@ -131,9 +136,31 @@ Shader "Custom/RayTracer"
                 return closest;
             }
 
+            float3 Trace(Ray ray, inout uint rngState) {
+                float3 incomingLight = 0;
+                float3 rayColor = 1;
+                for (int i = 0; i < 1; i++) {
+                    Collision collision = closestCollision(ray);
+                    if (collision.didCollide) {
+                        ray.origin = collision.collisionPoint;
+                        ray.dir = RandomHemisphereDirection(collision.normal, rngState);
+                        RayTracerMaterial material = collision.material;
+                        float3 emittedLight = material.emissionColor * material.emissionStrength;
+                        incomingLight += emittedLight * rayColor;
+                        rayColor *= material.color;
+                    } else {
+                        break;
+                    }
+                }
+                return incomingLight;
+            }
 
             float4 frag(v2f i) : SV_Target
             {
+                uint2 numPixels = _ScreenParams.xy;
+                uint2 pixelCoord = i.pos * numPixels;
+                uint pixelIndex = pixelCoord.y * numPixels.x + pixelCoord.x;
+                uint rngState = pixelIndex;
                 // Calculate position of a pixel with respect to the camera's projection plane.
                 float3 viewPointLocal = float3(i.pos - 0.5, 1) * CamDim; // center the pixel and scale it by CamDim.
                 float3 viewPoint = mul(CamLocalToWorldMatrix, float4(viewPointLocal, 1)); // Convert point to world coordinates.
@@ -141,7 +168,9 @@ Shader "Custom/RayTracer"
                 Ray ray;
                 ray.origin = _WorldSpaceCameraPos;
                 ray.dir = normalize(viewPoint - ray.origin); // Ray stars from camera and ends in viewPoint.
-                return closestCollision(ray).material.color; 
+                
+                float3 pixelCol = Trace(ray, rngState);
+                return float4(pixelCol, 1); 
             }
             ENDCG
         }
