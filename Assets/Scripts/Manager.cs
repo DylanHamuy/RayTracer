@@ -103,6 +103,7 @@ public class Manager : MonoBehaviour
 		if (sphereBuffer != null)
 		{
 			sphereBuffer.Release();
+            sphereBuffer = null;
 		}
 		
 	}

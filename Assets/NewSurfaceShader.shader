@@ -40,7 +40,7 @@ Shader "Custom/RayTracer"
             struct RayTracerMaterial {
                 float4 color;
                 float4 emissionColor;
-	            float4 emissionStrength;
+	            float emissionStrength;
             };
             
             struct Collision {
@@ -59,8 +59,6 @@ Shader "Custom/RayTracer"
 
             StructuredBuffer<Sphere> Spheres;
             int NumSpheres;
-  
-
 
             float RandomValue(inout uint state)
 			{
@@ -139,7 +137,7 @@ Shader "Custom/RayTracer"
             float3 Trace(Ray ray, inout uint rngState) {
                 float3 incomingLight = 0;
                 float3 rayColor = 1;
-                for (int i = 0; i < 1; i++) {
+                for (int i = 0; i < 7; i++) {
                     Collision collision = closestCollision(ray);
                     if (collision.didCollide) {
                         ray.origin = collision.collisionPoint;
