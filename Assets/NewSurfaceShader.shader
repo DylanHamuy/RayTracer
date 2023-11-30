@@ -167,7 +167,13 @@ Shader "Custom/RayTracer"
                 ray.origin = _WorldSpaceCameraPos;
                 ray.dir = normalize(viewPoint - ray.origin); // Ray stars from camera and ends in viewPoint.
                 
-                float3 pixelCol = Trace(ray, rngState);
+
+                float3 totalLight = 0;
+                for (int rayIndex = 0; rayIndex < 50; rayIndex++) {
+                    totalLight += Trace(ray, rngState);
+                }
+
+                float3 pixelCol = totalLight / 50;
                 return float4(pixelCol, 1); 
             }
             ENDCG
